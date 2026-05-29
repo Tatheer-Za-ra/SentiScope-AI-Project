@@ -1,0 +1,54 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# IDE and system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Dataset files
+data/*.csv
+data/*.xlsx
+data/*.json
+!data/.gitkeep
+
+# Trained model files and local model folders
+models/*.pkl
+models/*.joblib
+models/*.bin
+models/*.pt
+models/*.pth
+models/*/
+!models/.gitkeep
+
+# Hugging Face and local caches
+.cache/
+cache/
+hf_cache/
+
+# Generated report assets
+report_assets/*.txt
+report_assets/*.csv
+report_assets/*.png
+report_assets/*.jpg
+!report_assets/.gitkeep
+
+# Screenshot images
+screenshots/*.png
+screenshots/*.jpg
+screenshots/*.jpeg
+!screenshots/.gitkeep
+
+# Logs and temporary files
+*.log
+*.tmp
+temp/
+tmp/
