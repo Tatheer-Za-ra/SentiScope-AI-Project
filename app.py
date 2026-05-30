@@ -9,7 +9,7 @@ from bert_predict import MODEL_NAME as BERT_MODEL_NAME
 from bert_predict import predict_distilbert_sentiment
 from predict import MODEL_NAME as TRADITIONAL_MODEL_NAME
 from predict import model_files_exist, predict_sentiment
-from preprocessing import analyze_sentiment, preprocess_text
+from preprocessing import NEGATIVE_WORDS, POSITIVE_WORDS, analyze_sentiment, preprocess_text
 
 
 st.set_page_config(
@@ -345,6 +345,49 @@ def safe_text(value):
     return html.escape(str(value))
 
 
+def highlight_sentiment_words(text):
+    """Highlight simple keyword-level sentiment clues in the original text."""
+    highlighted_words = []
+    positive_found = []
+    negative_found = []
+    neutral_words = []
+
+    for word in str(text).split():
+        cleaned_word = word.strip(".,!?;:\"'()[]{}").lower()
+        escaped_word = safe_text(word)
+
+        if cleaned_word in POSITIVE_WORDS:
+            positive_found.append(cleaned_word)
+            highlighted_words.append(
+                f'<span style="background:rgba(34,197,94,0.22); color:#bbf7d0; '
+                f'border:1px solid rgba(34,197,94,0.45); border-radius:8px; '
+                f'padding:0.08rem 0.35rem; margin:0.08rem; display:inline-block;">{escaped_word}</span>'
+            )
+        elif cleaned_word in NEGATIVE_WORDS:
+            negative_found.append(cleaned_word)
+            highlighted_words.append(
+                f'<span style="background:rgba(248,113,113,0.22); color:#fecaca; '
+                f'border:1px solid rgba(248,113,113,0.45); border-radius:8px; '
+                f'padding:0.08rem 0.35rem; margin:0.08rem; display:inline-block;">{escaped_word}</span>'
+            )
+        else:
+            if cleaned_word:
+                neutral_words.append(cleaned_word)
+            highlighted_words.append(escaped_word)
+
+    return {
+        "highlighted_text": " ".join(highlighted_words),
+        "positive_words": sorted(set(positive_found)),
+        "negative_words": sorted(set(negative_found)),
+        "neutral_words": sorted(set(neutral_words)),
+    }
+
+
+def render_word_list(words):
+    """Format a compact list of words for display."""
+    return ", ".join(words) if words else "None"
+
+
 def show_sidebar():
     """Display sidebar branding and navigation."""
     pages = [
@@ -368,7 +411,7 @@ def show_sidebar():
 
     with st.sidebar:
         st.title("🧠 SentiScope AI")
-        st.caption("Version 4 - Sentiment Analytics Platform")
+        st.caption("Version 5 - Final NLP Submission Build")
 
         selected_page = st.radio(
             "Navigation",
@@ -659,7 +702,7 @@ def show_homepage():
     """Display the project landing dashboard."""
     st.markdown('<div class="main-title">SentiScope AI</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="subtitle">A Version 3 NLP platform comparing traditional ML with DistilBERT transformers.</div>',
+        '<div class="subtitle">A Version 5 NLP platform with explainability, batch analytics, and report-ready outputs.</div>',
         unsafe_allow_html=True,
     )
 
@@ -684,8 +727,8 @@ def show_homepage():
         st.markdown(
             """
             <div class="card">
-                <div class="small-label">Version 3 Focus</div>
-                <div class="big-value">NLP Model Comparison</div>
+                <div class="small-label">Version 5 Focus</div>
+                <div class="big-value">Final BSCS NLP Submission</div>
                 <p style="color:#cbd5e1; margin-top:0.6rem;">
                     TF-IDF + Logistic Regression vs DistilBERT sentiment analysis.
                 </p>
@@ -718,27 +761,27 @@ def show_sample_buttons():
 
     with col1:
         st.button(
-            "Positive Review",
+            "Positive Tweet",
             on_click=set_sample_text,
-            args=("This product is amazing, helpful, and excellent. I really love it!",),
+            args=("This study app is amazing, fast, and helpful for my semester project demo!",),
         )
     with col2:
         st.button(
-            "Negative Review",
+            "Negative Tweet",
             on_click=set_sample_text,
-            args=("The service was terrible, slow, and disappointing. I hate the experience.",),
+            args=("The product update is terrible, slow, and confusing. I am really disappointed.",),
         )
     with col3:
         st.button(
-            "Neutral Review",
+            "Neutral Tweet",
             on_click=set_sample_text,
-            args=("The package arrived today and the item is on the table.",),
+            args=("The app opened today and showed the dashboard with three menu options.",),
         )
     with col4:
         st.button(
-            "Mixed Review",
+            "Mixed Sentiment Tweet",
             on_click=set_sample_text,
-            args=("The design is beautiful and useful, but delivery was bad and very slow.",),
+            args=("The interface is beautiful and useful, but the loading time feels slow.",),
         )
 
 
@@ -796,6 +839,34 @@ def rule_based_explanation(tokens):
         )
 
 
+def show_explainable_nlp_section(user_text):
+    """Show honest keyword-level explainability for report/demo use."""
+    explanation = highlight_sentiment_words(user_text)
+
+    st.markdown('<div class="section-heading">Explainable NLP</div>', unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div class="card">
+            <div class="small-label">Keyword-Level Sentiment Clues</div>
+            <p style="color:#dbeafe; line-height:1.9; margin-top:0.75rem;">
+                {explanation["highlighted_text"]}
+            </p>
+            <p style="color:#bbf7d0;"><strong>Positive keywords found:</strong>
+                {safe_text(render_word_list(explanation["positive_words"]))}</p>
+            <p style="color:#fecaca;"><strong>Negative keywords found:</strong>
+                {safe_text(render_word_list(explanation["negative_words"]))}</p>
+            <p style="color:#cbd5e1;"><strong>Neutral/unknown words:</strong>
+                {safe_text(render_word_list(explanation["neutral_words"]))}</p>
+            <p style="color:#cbd5e1; margin-bottom:0;">
+                The explanation is based on keyword-level sentiment clues. Final
+                prediction is generated using the selected ML/Transformer model.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def show_confidence_summary(traditional_prediction, bert_prediction):
     """Show which model is more confident for the current user text."""
     st.markdown('<div class="section-heading">Which model appears more confident?</div>', unsafe_allow_html=True)
@@ -832,7 +903,7 @@ def show_confidence_summary(traditional_prediction, bert_prediction):
 
 def show_analyze_page():
     """Run both sentiment models on a single user input."""
-    st.markdown('<div class="main-title">Analyze Sentiment</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-title">Single Text Prediction</div>', unsafe_allow_html=True)
     st.markdown(
         '<div class="subtitle">Enter text once and compare traditional NLP with DistilBERT automatically.</div>',
         unsafe_allow_html=True,
@@ -865,7 +936,6 @@ def show_analyze_page():
                 status.update(label="Traditional model files are missing.", state="error", expanded=True)
                 st.warning("Traditional model not found. Please run python train_traditional.py first.")
                 show_preprocessing_steps(preprocessing_steps)
-                rule_based_explanation(preprocessing_steps["tokens"])
                 return
 
             st.write("Running TF-IDF + Logistic Regression...")
@@ -878,6 +948,7 @@ def show_analyze_page():
 
         st.success("Analysis completed successfully.")
 
+        st.markdown('<div class="section-heading">Traditional vs DistilBERT Comparison</div>', unsafe_allow_html=True)
         left_col, right_col = st.columns([1, 1])
         with left_col:
             sentiment_card(
@@ -911,8 +982,9 @@ def show_analyze_page():
         )
 
         show_confidence_summary(traditional_prediction, bert_prediction)
+        show_explainable_nlp_section(user_text)
+        st.markdown('<div class="section-heading">Preprocessing Pipeline</div>', unsafe_allow_html=True)
         show_preprocessing_steps(preprocessing_steps)
-        rule_based_explanation(preprocessing_steps["tokens"])
 
 
 def show_model_comparison_page():
@@ -1410,8 +1482,9 @@ def show_about():
         <div class="card">
             <p style="color:#dbeafe;">
                 SentiScope AI is a BSCS Natural Language Processing semester
-                project. Version 3 turns the project into a comparison platform
-                for traditional machine learning and modern transformer-based NLP.
+                project. Version 5 prepares the platform for final submission
+                with explainability, batch analytics, model comparison, and
+                report-ready outputs.
             </p>
             <p style="color:#cbd5e1;">
                 Version 1 preprocessing visualization and Version 2 traditional

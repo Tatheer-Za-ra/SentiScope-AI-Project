@@ -1,57 +1,35 @@
 # SentiScope AI
 
-SentiScope AI is a BSCS Natural Language Processing semester project. Version 4 is a complete sentiment analytics platform with single text analysis, batch CSV analysis, model comparison, analytics dashboards, and report-ready exports.
+## Project Title
 
-## Project Overview
+**SentiScope AI: A Sentiment Analysis Platform Using Traditional NLP and Transformer-Based NLP**
 
-The project analyzes text such as tweets, reviews, and comments. It shows how the same sentiment analysis problem can be solved using:
+## Project Objective
 
-- Traditional NLP: TF-IDF + Logistic Regression
-- Modern NLP: DistilBERT Transformer
+The objective of SentiScope AI is to build a complete BSCS Natural Language Processing project that analyzes sentiment from reviews, tweets, and comments. The system demonstrates preprocessing, traditional machine learning, transformer-based NLP, batch CSV analysis, explainable NLP, and analytics dashboards.
 
-The app compares both models using prediction output, confidence score, processing time, evaluation metrics, and batch-level analytics.
+## Problem Statement
 
-## Objective
+Large volumes of online comments, tweets, and reviews are difficult to analyze manually. SentiScope AI solves this by automatically classifying text into Positive, Negative, or Neutral sentiment and presenting the results in a clear dashboard suitable for reports, demos, and screenshots.
 
-The objective is to demonstrate a complete NLP analytics workflow:
+## Dataset Used
 
-1. Preprocess text
-2. Train a traditional ML sentiment model
-3. Run DistilBERT sentiment prediction
-4. Compare both approaches
-5. Analyze uploaded CSV files in batch
-6. Generate report-ready metrics, exports, and charts
+The project uses a Twitter sentiment dataset stored locally inside the `data/` folder.
 
-## Version 4 Features
-
-- Batch CSV Analysis
-- Analytics Dashboard
-- DistilBERT Final Analytics Model
-- CSV Export
-- Sentiment Statistics
-- Downloadable prediction results
-- Model Agreement Analysis
-- Interactive Plotly visualizations
-- Report export support inside `report_assets/`
-
-## Dataset Description
-
-The project uses a Twitter sentiment CSV dataset stored inside the `data/` folder.
-
-Current dataset path:
+Current expected dataset path:
 
 ```text
 data/Twitter_Data.csv
 ```
 
-Current columns:
+Current expected columns:
 
 ```text
-clean_text = tweet text
+clean_text = tweet/comment text
 category = sentiment label
 ```
 
-The `category` labels are mapped as:
+Label mapping:
 
 ```text
 -1 = Negative
@@ -59,68 +37,105 @@ The `category` labels are mapped as:
  1 = Positive
 ```
 
-If your dataset file or columns are different, edit these values in `train_traditional.py`:
+Dataset and trained model files are not pushed to GitHub due to size and reproducibility. Place the dataset in the `data/` folder and run `python train_traditional.py`.
 
-```python
-DATASET_PATH = Path("data/Twitter_Data.csv")
-TEXT_COLUMN = "clean_text"
-LABEL_COLUMN = "category"
-```
+## Tools and Technologies
 
-## Traditional NLP Approach
+- Python
+- Streamlit
+- Pandas
+- Scikit-learn
+- TF-IDF Vectorizer
+- Logistic Regression
+- Hugging Face Transformers
+- PyTorch
+- DistilBERT
+- Plotly
+- Matplotlib
 
-The traditional model uses TF-IDF vectorization and Logistic Regression. It is fast, lightweight, easy to explain, and useful for showing classic NLP feature engineering.
+## System Features
 
-## Modern NLP Approach
+- Dark Streamlit dashboard
+- Single Text Analysis
+- Preprocessing visualization
+- TF-IDF + Logistic Regression prediction
+- DistilBERT prediction
+- Traditional vs modern NLP comparison
+- Batch CSV Analysis
+- Downloadable CSV exports
+- Analytics Dashboard
+- KPI cards
+- Sentiment distribution charts
+- Model agreement analysis
+- Performance metrics
+- Explainable NLP keyword highlighting
+- Report-ready sections for screenshots
 
-The modern model uses DistilBERT through Hugging Face Transformers. DistilBERT understands context and word relationships better than frequency-based models, but it uses more computation and takes longer during inference.
+## Methodology
 
-## TF-IDF Explanation
+1. User enters text or uploads a CSV file.
+2. Text is preprocessed for traditional NLP.
+3. TF-IDF converts cleaned text into numerical features.
+4. Logistic Regression predicts sentiment from TF-IDF features.
+5. DistilBERT predicts sentiment using contextual transformer understanding.
+6. Results are compared using confidence, time, and evaluation metrics.
+7. Batch results are converted into dashboard analytics and export files.
 
-TF-IDF stands for Term Frequency-Inverse Document Frequency. It converts text into numbers by measuring how important a word is in a sentence compared with the full dataset.
+## Preprocessing Steps
 
-## DistilBERT Explanation
+The preprocessing pipeline includes:
 
-DistilBERT uses a transformer architecture. Instead of only counting words, it reads sentence context and learns relationships between words.
+1. Original text display
+2. Lowercasing
+3. Punctuation removal
+4. Tokenization
+5. Stopword removal
+6. Final processed text
 
-## System Architecture
+These steps are shown visually in the Streamlit app.
 
-```text
-User Text / Uploaded CSV
-   |
-   |-- Preprocessing Visualization
-   |
-   |-- Traditional NLP
-   |      |-- TF-IDF Vectorizer
-   |      |-- Logistic Regression
-   |
-   |-- Modern NLP
-   |      |-- DistilBERT Tokenizer
-   |      |-- DistilBERT Transformer Model
-   |
-   |-- Analytics Dashboard
-          |-- Sentiment Statistics
-          |-- Agreement Analysis
-          |-- Exportable Results
-```
+## Traditional Model
+
+### TF-IDF
+
+TF-IDF stands for Term Frequency-Inverse Document Frequency. It converts text into numerical values based on word importance in a document and across the dataset.
+
+### Logistic Regression
+
+Logistic Regression is used as the traditional machine learning classifier. It is fast, lightweight, and useful as a clear baseline model for NLP classification.
+
+## Modern Model
+
+### DistilBERT
+
+DistilBERT is a transformer-based NLP model. It understands context and word relationships better than simple frequency-based approaches. In SentiScope AI, DistilBERT is used as the final analytics model in the dashboard, while TF-IDF + Logistic Regression remains the baseline comparison model.
 
 ## Evaluation Metrics
 
-The project compares:
+The project reports:
 
 - Accuracy
 - Precision
 - Recall
 - F1 Score
+- Confusion Matrix
 - Average Confidence
 - Average Prediction Time
-- Confusion Matrix
+
+Evaluation outputs are saved inside `report_assets/`.
 
 ## Batch CSV Analysis
 
-The Batch CSV Analysis page lets users upload a CSV file, automatically detect text columns, preview the dataset, and run both models on each row.
+The Batch CSV Analysis page allows users to:
 
-Exported prediction results include:
+- Upload a CSV file
+- Automatically detect text columns
+- Select the text column manually if needed
+- Preview the uploaded dataset
+- Run both TF-IDF and DistilBERT predictions
+- Export prediction results as CSV
+
+Exported columns include:
 
 - Original Text
 - Traditional Sentiment
@@ -130,23 +145,32 @@ Exported prediction results include:
 
 ## Analytics Dashboard
 
-The Analytics Dashboard displays:
+The Analytics Dashboard displays batch-level insights using DistilBERT final predictions:
 
 - Total records analyzed
-- Positive, negative, and neutral counts
-- Average confidence
+- Positive predictions
+- Negative predictions
+- Neutral predictions
+- Average DistilBERT confidence
 - Most common sentiment
-- Traditional model accuracy
-- DistilBERT accuracy
-- Best performing model
-- Average processing time
-- Total predictions generated
+- Sentiment distribution pie chart
+- Sentiment distribution bar chart
+- Confidence distribution histogram
+- Class frequency chart
 
-Final dashboard analytics are generated using DistilBERT predictions. TF-IDF + Logistic Regression is retained as the baseline comparison model.
+## Explainable NLP
 
-## Agreement Analysis
+The Explainable NLP section highlights keyword-level sentiment clues:
 
-The dashboard compares whether both models predicted the same sentiment for each record.
+- Positive words are highlighted in green
+- Negative words are highlighted in red
+- Neutral or unknown words are listed separately
+
+This is a simple keyword-level explanation for learning and reporting. It is not full BERT explainability. The final prediction is generated using the ML/Transformer models.
+
+## Model Agreement Analysis
+
+The app compares whether both models predicted the same sentiment for each batch record.
 
 It shows:
 
@@ -156,16 +180,31 @@ It shows:
 - Agreement pie chart
 - Agreement bar chart
 
-## How to Run Version 4
+## How to Train
 
-1. Place the Twitter sentiment dataset inside the `data/` folder.
-2. Train the traditional model and generate model comparison assets:
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Train the traditional model and generate evaluation report assets:
 
 ```bash
 python train_traditional.py
 ```
 
-3. Run the Streamlit dashboard:
+This creates:
+
+```text
+models/traditional_model.pkl
+models/tfidf_vectorizer.pkl
+report_assets/model_comparison.csv
+```
+
+## How to Run
+
+Run the app:
 
 ```bash
 streamlit run app.py
@@ -177,99 +216,59 @@ If `streamlit` is not recognized on Windows:
 python -m streamlit run app.py
 ```
 
-4. Use the sidebar to open:
-
-- Single Text Analysis
-- Batch CSV Analysis
-- Analytics Dashboard
-- Model Comparison
-- Performance Metrics
-
-Dataset and trained model files are not included in GitHub due to file size and reproducibility. Users should place the dataset inside `data/` and run `python train_traditional.py`.
-
-## Visualization Features
-
-Version 4 includes interactive Plotly charts:
-
-- Sentiment Distribution Pie Chart
-- Sentiment Distribution Bar Chart
-- Confidence Distribution Histogram
-- Traditional vs DistilBERT Agreement Chart
-- Class Frequency Chart
-
-## Report Assets
-
-Training and batch analysis generate report assets inside `report_assets/`:
-
-```text
-traditional_metrics.txt
-distilbert_metrics.txt
-traditional_confusion_matrix.png
-distilbert_confusion_matrix.png
-model_comparison.csv
-batch_analysis_results.csv
-sentiment_statistics.csv
-dashboard_summary.txt
-agreement_analysis.csv
-```
-
-These files can be used in the final report, presentation slides, and screenshots.
-
-## Installation Instructions
-
-Install all required packages:
+Expected workflow:
 
 ```bash
 pip install -r requirements.txt
-```
-
-On Windows, if `pip` or `streamlit` is not recognized, use:
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-## Training Instructions
-
-Train the traditional model and generate evaluation assets:
-
-```bash
 python train_traditional.py
-```
-
-DistilBERT evaluation is also attempted from the same test split. By default it uses a practical local sample. You can increase this in `train_traditional.py`:
-
-```python
-DISTILBERT_EVAL_SAMPLE_SIZE = 500
-```
-
-## Running Instructions
-
-Run the Streamlit dashboard:
-
-```bash
 streamlit run app.py
 ```
 
-If the `streamlit` command is not recognized:
+## Demo Flow
 
-```bash
-python -m streamlit run app.py
-```
+Recommended demo order:
 
-## Project Screenshots
+1. Open the Home page.
+2. Go to Single Text Analysis.
+3. Try Positive, Negative, Neutral, and Mixed Sentiment sample tweets.
+4. Show Traditional vs DistilBERT results.
+5. Show Explainable NLP keyword highlighting.
+6. Show Preprocessing Pipeline.
+7. Open Batch CSV Analysis.
+8. Upload a CSV and run batch predictions.
+9. Download prediction results.
+10. Open Analytics Dashboard.
+11. Show KPI cards, charts, and agreement analysis.
+12. Open Model Comparison and Performance Metrics.
 
-Add final screenshots inside the `screenshots/` folder.
+## Limitations
 
-Recommended screenshots:
+- DistilBERT can be slower on CPU.
+- The explainability section is keyword-based, not deep transformer explainability.
+- DistilBERT is not fine-tuned on the local Twitter dataset in this version.
+- Model performance may vary depending on dataset quality and class balance.
+- Large datasets may take longer during batch analysis.
 
-- Home page
-- Single Text Analysis page
-- Batch CSV Analysis page
-- Analytics Dashboard page
-- Model Comparison page
-- Performance Metrics page
-- Preprocessing visualization
+## Future Work
+
+- Fine-tune DistilBERT on the Twitter sentiment dataset.
+- Add SHAP or LIME explanations.
+- Add user authentication for saved reports.
+- Add database storage for previous analyses.
+- Add deployment with cached model loading.
+- Add more robust multilingual sentiment support.
+
+## Deployment Notes
+
+The project is prepared for later Streamlit deployment, but full deployment is not included yet.
+
+For future Streamlit Community Cloud deployment:
+
+- Keep source code on GitHub.
+- Do not push datasets or trained model files.
+- Add the dataset through a supported storage method or use a small demo dataset.
+- Ensure model files can be generated with `python train_traditional.py`.
+- Be aware that DistilBERT downloads are large and may require extra setup.
 
 ## Project Structure
 
@@ -283,21 +282,27 @@ SentiScope AI/
 |-- requirements.txt
 |-- README.md
 |-- .gitignore
+|-- .streamlit/
+|   `-- config.toml
 |-- data/
+|   `-- .gitkeep
 |-- models/
+|   `-- .gitkeep
 |-- screenshots/
+|   `-- .gitkeep
 `-- report_assets/
+    `-- .gitkeep
 ```
 
-## GitHub Preparation
+## GitHub Notes
 
-The `.gitignore` file keeps GitHub clean by ignoring:
+The following are intentionally ignored:
 
-- Dataset CSV files
+- Dataset files
 - Trained model files
-- Generated reports
+- Generated report files
 - Cache files
 - Virtual environments
-- Large screenshot images
+- Large screenshots
 
-Folder structure is preserved with `.gitkeep` files.
+Folder structure is preserved using `.gitkeep` files.
