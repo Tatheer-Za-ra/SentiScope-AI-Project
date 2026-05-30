@@ -359,7 +359,7 @@ Labels order: Positive, Negative, Neutral
         )
         comparison_rows.append(
             calculate_metric_row(
-                "DistilBERT",
+                "DistilBERT Sentiment Transformer",
                 distilbert_y_test,
                 distilbert_predictions,
                 distilbert_avg_confidence,
@@ -377,7 +377,7 @@ Labels order: Positive, Negative, Neutral
         save_text_file(DISTILBERT_METRICS_PATH, distilbert_metrics_text)
         comparison_rows.append(
             {
-                "Model": "DistilBERT",
+                "Model": "DistilBERT Sentiment Transformer",
                 "Accuracy": None,
                 "Precision": None,
                 "Recall": None,

@@ -26,6 +26,9 @@ models/*.joblib
 models/*.bin
 models/*.pt
 models/*.pth
+models/*.safetensors
+models/*.onnx
+models/*.ckpt
 models/*/
 !models/.gitkeep
 

@@ -24,6 +24,14 @@ REPORT_ASSETS = Path("report_assets")
 COMPARISON_CSV = REPORT_ASSETS / "model_comparison.csv"
 TRADITIONAL_CM_IMAGE = REPORT_ASSETS / "traditional_confusion_matrix.png"
 DISTILBERT_CM_IMAGE = REPORT_ASSETS / "distilbert_confusion_matrix.png"
+BATCH_RESULTS_CSV = REPORT_ASSETS / "batch_analysis_results.csv"
+SENTIMENT_STATS_CSV = REPORT_ASSETS / "sentiment_statistics.csv"
+DASHBOARD_SUMMARY_TXT = REPORT_ASSETS / "dashboard_summary.txt"
+AGREEMENT_ANALYSIS_CSV = REPORT_ASSETS / "agreement_analysis.csv"
+MODEL_NAME_ALIASES = {
+    TRADITIONAL_MODEL_NAME: [TRADITIONAL_MODEL_NAME],
+    BERT_MODEL_NAME: [BERT_MODEL_NAME, "DistilBERT", "DistilBERT Transformer"],
+}
 
 
 def load_custom_css():
@@ -73,6 +81,11 @@ def load_custom_css():
 
         [data-testid="stSidebar"] .stRadio label {
             color: var(--muted) !important;
+        }
+
+        [data-testid="stSidebar"] [role="radiogroup"] label,
+        [data-testid="stSidebar"] [role="radiogroup"] span {
+            color: #f8fafc !important;
         }
 
         .block-container {
@@ -188,6 +201,22 @@ def load_custom_css():
             transform: translateY(-1px);
         }
 
+        div.stDownloadButton > button {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid rgba(56, 189, 248, 0.55);
+            background: linear-gradient(180deg, rgba(14, 165, 233, 0.30), rgba(15, 23, 42, 0.94));
+            color: #ffffff !important;
+            padding: 0.75rem 0.95rem;
+            font-weight: 800;
+        }
+
+        div.stDownloadButton > button:hover {
+            border-color: #7dd3fc;
+            background: rgba(14, 165, 233, 0.40);
+            color: #ffffff !important;
+        }
+
         textarea, input, .stTextArea textarea {
             background: #0b1220 !important;
             color: #f8fafc !important;
@@ -220,15 +249,46 @@ def load_custom_css():
             font-weight: 650;
         }
 
+        [data-testid="stSelectbox"] label,
+        [data-testid="stFileUploader"] label {
+            color: #e2e8f0 !important;
+            font-weight: 700;
+        }
+
+        [data-baseweb="select"] > div,
+        [data-testid="stFileUploaderDropzone"] {
+            background: #0b1220 !important;
+            color: #f8fafc !important;
+            border: 1px solid rgba(56, 189, 248, 0.48) !important;
+            border-radius: 14px !important;
+        }
+
+        [data-baseweb="select"] span,
+        [data-testid="stFileUploaderDropzone"] *,
+        [data-testid="stUploadedFile"] * {
+            color: #f8fafc !important;
+        }
+
         [data-testid="stMetric"] {
             background: rgba(17, 24, 39, 0.96);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 1rem;
+            box-shadow: 0 12px 28px rgba(2, 6, 23, 0.26);
         }
 
         [data-testid="stMetric"] * {
             color: var(--text) !important;
+        }
+
+        [data-testid="stMetricLabel"] p {
+            color: #cbd5e1 !important;
+            font-weight: 750 !important;
+        }
+
+        [data-testid="stMetricValue"] {
+            color: #ffffff !important;
+            font-weight: 850 !important;
         }
 
         [data-testid="stDataFrame"] {
@@ -238,11 +298,34 @@ def load_custom_css():
             overflow: hidden;
         }
 
+        [data-testid="stDataFrame"] * {
+            color: #f8fafc !important;
+        }
+
+        [data-testid="stDataFrame"] [role="columnheader"],
+        [data-testid="stDataFrame"] [role="gridcell"] {
+            color: #f8fafc !important;
+            background-color: #111827 !important;
+        }
+
+        [role="tab"], [data-baseweb="tab"] {
+            color: #e2e8f0 !important;
+            font-weight: 750 !important;
+        }
+
+        [aria-selected="true"], [data-baseweb="tab"][aria-selected="true"] {
+            color: #7dd3fc !important;
+        }
+
         .stAlert {
             background: rgba(15, 23, 42, 0.96) !important;
             color: var(--text) !important;
             border: 1px solid var(--border);
             border-radius: 14px;
+        }
+
+        .stAlert * {
+            color: #f8fafc !important;
         }
 
         code {
@@ -264,22 +347,36 @@ def safe_text(value):
 
 def show_sidebar():
     """Display sidebar branding and navigation."""
+    pages = [
+        "Home",
+        "Single Text Analysis",
+        "Batch CSV Analysis",
+        "Model Comparison",
+        "Performance Metrics",
+        "Analytics Dashboard",
+        "How it Works",
+        "About Project",
+    ]
+
+    if "selected_page" not in st.session_state:
+        st.session_state["selected_page"] = "Home"
+    if "pending_page" in st.session_state:
+        st.session_state["selected_page"] = st.session_state.pop("pending_page")
+        st.session_state["selected_page_radio"] = st.session_state["selected_page"]
+    if st.session_state["selected_page"] not in pages:
+        st.session_state["selected_page"] = "Home"
+
     with st.sidebar:
         st.title("🧠 SentiScope AI")
-        st.caption("Version 3 - Traditional NLP vs Modern NLP")
+        st.caption("Version 4 - Sentiment Analytics Platform")
 
         selected_page = st.radio(
             "Navigation",
-            [
-                "Home",
-                "Analyze",
-                "Model Comparison",
-                "Performance Metrics",
-                "How it Works",
-                "About",
-            ],
-            index=0,
+            pages,
+            index=pages.index(st.session_state["selected_page"]),
+            key="selected_page_radio",
         )
+        st.session_state["selected_page"] = selected_page
 
         st.markdown("---")
         st.markdown(
@@ -347,6 +444,215 @@ def load_comparison_data():
         return None
 
     return pd.read_csv(COMPARISON_CSV)
+
+
+def detect_text_columns(dataframe):
+    """Find likely text columns in an uploaded CSV file."""
+    common_names = ["text", "tweet", "content", "review", "comment", "clean_text", "message"]
+    detected_columns = [
+        column
+        for column in dataframe.columns
+        if str(column).strip().lower() in common_names
+    ]
+
+    if detected_columns:
+        return detected_columns
+
+    # Fallback: object/string columns are likely to contain text.
+    return [
+        column
+        for column in dataframe.columns
+        if dataframe[column].dtype == "object" or str(dataframe[column].dtype).startswith("string")
+    ]
+
+
+def detect_label_columns(dataframe):
+    """Find possible sentiment/class columns for dataset summary display."""
+    common_names = ["sentiment", "label", "class", "category", "target"]
+    return [
+        column
+        for column in dataframe.columns
+        if str(column).strip().lower() in common_names
+    ]
+
+
+def dataframe_to_csv_bytes(dataframe):
+    """Convert a dataframe into downloadable CSV bytes."""
+    return dataframe.to_csv(index=False).encode("utf-8")
+
+
+def save_batch_report_assets(results_dataframe):
+    """Save Version 4 batch analytics files into report_assets/."""
+    REPORT_ASSETS.mkdir(parents=True, exist_ok=True)
+    results_dataframe.to_csv(BATCH_RESULTS_CSV, index=False)
+
+    stats_rows = []
+    for model_column in ["Traditional Sentiment", "DistilBERT Sentiment"]:
+        counts = results_dataframe[model_column].value_counts()
+        for sentiment, count in counts.items():
+            stats_rows.append(
+                {
+                    "Model": model_column.replace(" Sentiment", ""),
+                    "Sentiment": sentiment,
+                    "Count": int(count),
+                }
+            )
+
+    pd.DataFrame(stats_rows).to_csv(SENTIMENT_STATS_CSV, index=False)
+
+    agreement_dataframe = create_agreement_dataframe(results_dataframe)
+    agreement_dataframe.to_csv(AGREEMENT_ANALYSIS_CSV, index=False)
+
+    summary_text = build_dashboard_summary(results_dataframe)
+    DASHBOARD_SUMMARY_TXT.write_text(summary_text, encoding="utf-8")
+
+
+def create_agreement_dataframe(results_dataframe):
+    """Create agreement/disagreement summary rows for both models."""
+    agreement_series = results_dataframe["Traditional Sentiment"] == results_dataframe["DistilBERT Sentiment"]
+    agree_count = int(agreement_series.sum())
+    disagree_count = int((~agreement_series).sum())
+    total_records = len(results_dataframe)
+    agreement_percentage = round((agree_count / total_records) * 100, 2) if total_records else 0.0
+
+    return pd.DataFrame(
+        [
+            {"Agreement Status": "Agree", "Count": agree_count, "Percentage": agreement_percentage},
+            {"Agreement Status": "Disagree", "Count": disagree_count, "Percentage": round(100 - agreement_percentage, 2)},
+        ]
+    )
+
+
+def build_dashboard_summary(results_dataframe):
+    """Create a plain text summary for reports and presentations."""
+    total_records = len(results_dataframe)
+    sentiment_counts = results_dataframe["DistilBERT Sentiment"].value_counts()
+    most_common = sentiment_counts.idxmax() if not sentiment_counts.empty else "N/A"
+    average_confidence = results_dataframe["DistilBERT Confidence"].mean()
+    agreement_data = create_agreement_dataframe(results_dataframe)
+    agreement_percentage = float(
+        agreement_data.loc[agreement_data["Agreement Status"] == "Agree", "Percentage"].iloc[0]
+    )
+
+    return f"""SentiScope AI - Batch Analytics Summary
+Final Analytics Model: DistilBERT Transformer
+Total Records Analyzed: {total_records}
+Positive Count: {int(sentiment_counts.get("Positive", 0))}
+Negative Count: {int(sentiment_counts.get("Negative", 0))}
+Neutral Count: {int(sentiment_counts.get("Neutral", 0))}
+Average DistilBERT Confidence: {average_confidence:.2f}%
+Most Common Sentiment: {most_common}
+Model Agreement: {agreement_percentage:.2f}%
+"""
+
+
+def run_batch_predictions(dataframe, text_column):
+    """Run both sentiment models for each row in the selected text column."""
+    if not model_files_exist():
+        raise FileNotFoundError("Traditional model not found. Please run python train_traditional.py first.")
+
+    results = []
+    total_rows = len(dataframe)
+    progress_bar = st.progress(0)
+    progress_text = st.empty()
+
+    for index, row in dataframe.iterrows():
+        original_text = str(row[text_column])
+        progress_text.info(f"Analyzing record {len(results) + 1} of {total_rows}...")
+
+        traditional_prediction = predict_sentiment(original_text)
+        bert_prediction = predict_distilbert_sentiment(original_text)
+
+        results.append(
+            {
+                "Original Text": original_text,
+                "Traditional Sentiment": traditional_prediction["sentiment"],
+                "Traditional Confidence": traditional_prediction["confidence"],
+                "Traditional Processing Time": traditional_prediction["processing_time"],
+                "DistilBERT Sentiment": bert_prediction["sentiment"],
+                "DistilBERT Confidence": bert_prediction["confidence"],
+                "DistilBERT Processing Time": bert_prediction["processing_time"],
+                "Models Agree": traditional_prediction["sentiment"] == bert_prediction["sentiment"],
+            }
+        )
+
+        progress_bar.progress((len(results)) / total_rows)
+
+    progress_text.success("Batch analysis completed.")
+    return pd.DataFrame(results)
+
+
+def get_active_batch_results():
+    """Load batch results from session state or saved report assets."""
+    if "batch_results" in st.session_state:
+        return st.session_state["batch_results"]
+
+    if BATCH_RESULTS_CSV.exists():
+        return pd.read_csv(BATCH_RESULTS_CSV)
+
+    return None
+
+
+def get_sentiment_counts(results_dataframe, model_column="Traditional Sentiment"):
+    """Return counts for Positive, Negative, and Neutral labels."""
+    counts = results_dataframe[model_column].value_counts()
+    return {
+        "Positive": int(counts.get("Positive", 0)),
+        "Negative": int(counts.get("Negative", 0)),
+        "Neutral": int(counts.get("Neutral", 0)),
+    }
+
+
+def style_plotly_chart(figure):
+    """Apply readable chart styling for both dark and light Streamlit themes."""
+    figure.update_layout(
+        paper_bgcolor="#070b14",
+        plot_bgcolor="#111827",
+        font={"color": "#f8fafc", "size": 14},
+        title={"font": {"color": "#f8fafc", "size": 18}},
+        legend={"font": {"color": "#f8fafc"}},
+        xaxis={
+            "title_font": {"color": "#e2e8f0"},
+            "tickfont": {"color": "#e2e8f0"},
+            "gridcolor": "rgba(148, 163, 184, 0.22)",
+        },
+        yaxis={
+            "title_font": {"color": "#e2e8f0"},
+            "tickfont": {"color": "#e2e8f0"},
+            "gridcolor": "rgba(148, 163, 184, 0.22)",
+        },
+    )
+    return figure
+
+
+def get_model_metric(comparison_data, model_name, metric_name):
+    """Safely read one metric value from model_comparison.csv."""
+    if comparison_data is None or metric_name not in comparison_data.columns:
+        return None
+
+    possible_names = MODEL_NAME_ALIASES.get(model_name, [model_name])
+    row = comparison_data[comparison_data["Model"].isin(possible_names)]
+    if row.empty or pd.isna(row[metric_name].iloc[0]):
+        return None
+
+    return float(row[metric_name].iloc[0])
+
+
+def determine_best_model(comparison_data):
+    """Select best model by F1 Score first, then Accuracy if F1 is unavailable."""
+    if comparison_data is None or comparison_data.empty:
+        return "N/A", "Model comparison metrics are not available."
+
+    metric_name = "F1 Score" if comparison_data["F1 Score"].notna().any() else "Accuracy"
+    valid_rows = comparison_data.dropna(subset=[metric_name])
+
+    if valid_rows.empty:
+        return "N/A", "F1 Score and Accuracy are not available."
+
+    best_row = valid_rows.sort_values(metric_name, ascending=False).iloc[0]
+    best_model = best_row["Model"]
+    reason = f"{best_model} selected because it achieved the highest {metric_name}."
+    return best_model, reason
 
 
 def show_homepage():
@@ -642,6 +948,347 @@ def show_model_comparison_page():
         st.plotly_chart(figure, use_container_width=True)
 
 
+def show_batch_csv_analysis_page():
+    """Upload a CSV, run both models, preview results, and export outputs."""
+    st.markdown('<div class="main-title">Batch CSV Analysis</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="subtitle">Upload a CSV file and generate sentiment predictions from both models.</div>',
+        unsafe_allow_html=True,
+    )
+
+    uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+
+    if uploaded_file is None:
+        st.info("Upload a CSV file to begin batch sentiment analysis.")
+        return
+
+    try:
+        dataframe = pd.read_csv(uploaded_file)
+    except Exception as error:
+        st.error(f"Invalid CSV file. Please upload a readable CSV. Details: {error}")
+        return
+
+    if dataframe.empty:
+        st.error("The uploaded CSV file is empty.")
+        return
+
+    text_columns = detect_text_columns(dataframe)
+    if not text_columns:
+        st.error("No text column found. Please upload a CSV with a text, tweet, review, comment, content, or string column.")
+        return
+
+    st.markdown(
+        """
+        <div class="card">
+            <div class="small-label">Text Column Selection</div>
+            <p style="color:#dbeafe; margin-bottom:0;">
+                Select the column that contains the review, tweet, or comment text to analyze.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    common_text_names = {"text", "tweet", "review", "comment", "content", "clean_text", "message"}
+    detected_named_columns = [
+        column for column in text_columns if str(column).strip().lower() in common_text_names
+    ]
+    if detected_named_columns:
+        st.success(f"Detected text column: {detected_named_columns[0]}")
+    else:
+        st.info("Please choose the column that contains text for sentiment analysis.")
+
+    selected_text_column = st.selectbox(
+        "Select text column for sentiment analysis",
+        text_columns,
+        index=0,
+        help="Choose the column containing reviews, tweets, comments, or other text values.",
+    )
+
+    st.markdown('<div class="section-heading">Selected Text Preview</div>', unsafe_allow_html=True)
+    st.dataframe(
+        dataframe[[selected_text_column]].dropna().head(5),
+        use_container_width=True,
+    )
+
+    st.markdown('<div class="section-heading">Dataset Preview</div>', unsafe_allow_html=True)
+    st.dataframe(dataframe.head(10), use_container_width=True)
+
+    missing_values = int(dataframe[selected_text_column].isna().sum())
+    label_columns = detect_label_columns(dataframe)
+    class_count = dataframe[label_columns[0]].dropna().nunique() if label_columns else None
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Number of Records", len(dataframe))
+    col2.metric("Missing Text Values", missing_values)
+    col3.metric("Number of Classes", class_count if class_count is not None else "N/A")
+
+    clean_dataframe = dataframe.dropna(subset=[selected_text_column]).copy()
+    if clean_dataframe.empty:
+        st.error("No usable text rows found after removing missing values.")
+        return
+
+    st.warning("Batch DistilBERT analysis can take time on CPU. Keep the browser open while it runs.")
+
+    if st.button("Run Batch Analysis"):
+        try:
+            with st.status("Analyzing CSV using TF-IDF and DistilBERT...", expanded=True) as status:
+                st.write("Preparing uploaded records...")
+                results_dataframe = run_batch_predictions(clean_dataframe, selected_text_column)
+                st.write("Saving report assets...")
+                save_batch_report_assets(results_dataframe)
+                st.session_state["batch_results"] = results_dataframe
+                status.update(label="Batch analysis complete.", state="complete", expanded=False)
+            st.success("Batch analysis completed and report assets were saved.")
+        except Exception as error:
+            st.error(f"Batch analysis failed: {error}")
+            return
+
+    results_dataframe = get_active_batch_results()
+    if results_dataframe is None:
+        return
+
+    st.markdown('<div class="section-heading">Prediction Results</div>', unsafe_allow_html=True)
+    st.dataframe(results_dataframe.head(50), use_container_width=True)
+
+    st.download_button(
+        "⬇ Download Results CSV",
+        data=dataframe_to_csv_bytes(results_dataframe),
+        file_name="sentiscope_batch_predictions.csv",
+        mime="text/csv",
+    )
+
+    st.markdown(
+        """
+        <div class="card" style="margin-top:1rem;">
+            <div class="small-label">Next Step</div>
+            <p style="color:#dbeafe; margin-bottom:0;">
+                Open the analytics dashboard to view KPI cards, sentiment charts,
+                model agreement analysis, and export-ready insights.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    if st.button("📊 View Analytics Dashboard"):
+        st.session_state["pending_page"] = "Analytics Dashboard"
+        st.rerun()
+
+
+def show_project_statistics_panel(results_dataframe):
+    """Display model and project statistics cards."""
+    comparison_data = load_comparison_data()
+    traditional_accuracy = get_model_metric(comparison_data, TRADITIONAL_MODEL_NAME, "Accuracy")
+    traditional_f1 = get_model_metric(comparison_data, TRADITIONAL_MODEL_NAME, "F1 Score")
+    distilbert_accuracy = get_model_metric(comparison_data, BERT_MODEL_NAME, "Accuracy")
+    distilbert_f1 = get_model_metric(comparison_data, BERT_MODEL_NAME, "F1 Score")
+    average_traditional_time = results_dataframe["Traditional Processing Time"].mean()
+    average_distilbert_time = results_dataframe["DistilBERT Processing Time"].mean()
+    best_model, best_reason = determine_best_model(comparison_data)
+
+    st.markdown('<div class="section-heading">Project Statistics Panel</div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Traditional Accuracy", f"{traditional_accuracy:.4f}" if traditional_accuracy is not None else "N/A")
+    col2.metric("Traditional F1 Score", f"{traditional_f1:.4f}" if traditional_f1 is not None else "N/A")
+    col3.metric("Traditional Avg Time", f"{average_traditional_time:.4f}s")
+
+    col4, col5, col6 = st.columns(3)
+    col4.metric("DistilBERT Accuracy", f"{distilbert_accuracy:.4f}" if distilbert_accuracy is not None else "N/A")
+    col5.metric("DistilBERT F1 Score", f"{distilbert_f1:.4f}" if distilbert_f1 is not None else "N/A")
+    col6.metric("DistilBERT Avg Time", f"{average_distilbert_time:.4f}s")
+
+    st.markdown(
+        f"""
+        <div class="card" style="margin-top:1rem;">
+            <div class="small-label">Best Performing Model</div>
+            <div class="big-value">{safe_text(best_model)}</div>
+            <p style="color:#dbeafe; margin-bottom:0;">{safe_text(best_reason)}</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def show_analytics_dashboard_page():
+    """Display analytics, KPIs, agreement analysis, and export-ready insights."""
+    st.markdown('<div class="main-title">Analytics Dashboard</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="subtitle">Explore batch sentiment statistics, model agreement, and export-ready insights.</div>',
+        unsafe_allow_html=True,
+    )
+
+    results_dataframe = get_active_batch_results()
+    if results_dataframe is None:
+        st.warning("No batch analysis results found yet. Please run Batch CSV Analysis first, then return to this dashboard.")
+        return
+
+    st.markdown(
+        """
+        <div class="card">
+            <div class="small-label">Final Analytics Model</div>
+            <div class="big-value">DistilBERT Transformer</div>
+            <p style="color:#dbeafe; margin-top:0.65rem;">
+                DistilBERT is used as the final analytics engine because it
+                provides higher contextual understanding and better sentiment
+                classification performance. TF-IDF + Logistic Regression is
+                retained as a baseline comparison model.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    sentiment_counts = get_sentiment_counts(results_dataframe, "DistilBERT Sentiment")
+    total_records = len(results_dataframe)
+    average_confidence = results_dataframe["DistilBERT Confidence"].mean()
+    most_common_sentiment = max(sentiment_counts, key=sentiment_counts.get) if total_records else "N/A"
+
+    st.markdown('<div class="section-heading">KPI Cards</div>', unsafe_allow_html=True)
+    st.caption("Generated using DistilBERT Final Predictions")
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1.metric("Total Records Analyzed", total_records)
+    col2.metric("Positive Predictions", sentiment_counts["Positive"])
+    col3.metric("Negative Predictions", sentiment_counts["Negative"])
+    col4.metric("Neutral Predictions", sentiment_counts["Neutral"])
+    col5.metric("Avg DistilBERT Confidence", f"{average_confidence:.2f}%")
+    col6.metric("Most Common", most_common_sentiment)
+
+    show_project_statistics_panel(results_dataframe)
+
+    sentiment_distribution = pd.DataFrame(
+        {"Sentiment": list(sentiment_counts.keys()), "Count": list(sentiment_counts.values())}
+    )
+
+    st.markdown('<div class="section-heading">Sentiment Distribution (DistilBERT Final Predictions)</div>', unsafe_allow_html=True)
+    st.info("These charts are generated using the final predictions produced by DistilBERT.")
+    left_col, right_col = st.columns(2)
+    with left_col:
+        pie_chart = px.pie(
+            sentiment_distribution,
+            names="Sentiment",
+            values="Count",
+            title="Sentiment Distribution Pie Chart",
+            template="plotly_dark",
+        )
+        pie_chart.update_traces(textinfo="label+percent+value", textfont={"color": "#f8fafc", "size": 14})
+        pie_chart = style_plotly_chart(pie_chart)
+        st.plotly_chart(pie_chart, use_container_width=True)
+    with right_col:
+        bar_chart = px.bar(
+            sentiment_distribution,
+            x="Sentiment",
+            y="Count",
+            color="Sentiment",
+            title="Sentiment Distribution Bar Chart",
+            text="Count",
+            template="plotly_dark",
+        )
+        bar_chart.update_traces(textposition="outside", textfont={"color": "#f8fafc", "size": 14})
+        bar_chart = style_plotly_chart(bar_chart)
+        st.plotly_chart(bar_chart, use_container_width=True)
+
+    confidence_values = results_dataframe[
+        ["Traditional Confidence", "DistilBERT Confidence"]
+    ].melt(var_name="Model", value_name="Confidence")
+    confidence_values["Model"] = confidence_values["Model"].str.replace(" Confidence", "", regex=False)
+    histogram = px.histogram(
+        confidence_values,
+        x="Confidence",
+        color="Model",
+        barmode="group",
+        opacity=0.95,
+        nbins=20,
+        title="Confidence Distribution Histogram: Traditional vs DistilBERT",
+        color_discrete_map={
+            "Traditional": "#60a5fa",
+            "DistilBERT": "#f97316",
+        },
+        template="plotly_dark",
+    )
+    histogram = style_plotly_chart(histogram)
+    st.plotly_chart(histogram, use_container_width=True)
+
+    agreement_dataframe = create_agreement_dataframe(results_dataframe)
+    st.markdown('<div class="section-heading">Model Agreement Analysis</div>', unsafe_allow_html=True)
+    agree_count = int(agreement_dataframe.loc[agreement_dataframe["Agreement Status"] == "Agree", "Count"].iloc[0])
+    disagree_count = int(agreement_dataframe.loc[agreement_dataframe["Agreement Status"] == "Disagree", "Count"].iloc[0])
+    agreement_percentage = float(
+        agreement_dataframe.loc[agreement_dataframe["Agreement Status"] == "Agree", "Percentage"].iloc[0]
+    )
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Both Models Agree", agree_count)
+    col2.metric("Both Models Disagree", disagree_count)
+    col3.metric("Agreement Percentage", f"{agreement_percentage:.2f}%")
+
+    left_col, right_col = st.columns(2)
+    with left_col:
+        agreement_pie = px.pie(
+            agreement_dataframe,
+            names="Agreement Status",
+            values="Count",
+            title="Agreement Pie Chart",
+            template="plotly_dark",
+        )
+        agreement_pie.update_traces(textinfo="label+percent+value", textfont={"color": "#f8fafc", "size": 14})
+        agreement_pie = style_plotly_chart(agreement_pie)
+        st.plotly_chart(agreement_pie, use_container_width=True)
+    with right_col:
+        agreement_bar = px.bar(
+            agreement_dataframe,
+            x="Agreement Status",
+            y="Count",
+            color="Agreement Status",
+            title="Agreement Bar Chart",
+            text="Count",
+            template="plotly_dark",
+        )
+        agreement_bar.update_traces(textposition="outside", textfont={"color": "#f8fafc", "size": 14})
+        agreement_bar = style_plotly_chart(agreement_bar)
+        st.plotly_chart(agreement_bar, use_container_width=True)
+
+    model_sentiment_data = results_dataframe.melt(
+        value_vars=["Traditional Sentiment", "DistilBERT Sentiment"],
+        var_name="Model",
+        value_name="Sentiment",
+    )
+    class_frequency = px.histogram(
+        model_sentiment_data,
+        x="Sentiment",
+        color="Model",
+        barmode="group",
+        title="Class Frequency Chart",
+        template="plotly_dark",
+    )
+    class_frequency = style_plotly_chart(class_frequency)
+    st.plotly_chart(class_frequency, use_container_width=True)
+
+    st.markdown('<div class="section-heading">How Statistics Are Evaluated</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="card">
+            <p style="color:#dbeafe;"><strong>Traditional Model Metrics:</strong>
+            Generated from TF-IDF + Logistic Regression evaluation.</p>
+            <p style="color:#dbeafe;"><strong>DistilBERT Metrics:</strong>
+            Generated from DistilBERT evaluation.</p>
+            <p style="color:#dbeafe;"><strong>Best Performing Model:</strong>
+            Automatically selected using F1 Score comparison. If F1 Score is not
+            available, Accuracy is used instead.</p>
+            <p style="color:#dbeafe; margin-bottom:0;"><strong>Final Dashboard Analytics:</strong>
+            Generated using DistilBERT predictions from the latest batch analysis.</p>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.download_button(
+        "⬇ Download Results CSV",
+        data=dataframe_to_csv_bytes(results_dataframe),
+        file_name="sentiscope_batch_predictions.csv",
+        mime="text/csv",
+    )
+
+
 def show_performance_metrics_page():
     """Show metric cards, confusion matrices, and comparison charts."""
     st.markdown('<div class="main-title">Performance Metrics</div>', unsafe_allow_html=True)
@@ -784,12 +1431,16 @@ def main():
 
     if selected_page == "Home":
         show_homepage()
-    elif selected_page == "Analyze":
+    elif selected_page == "Single Text Analysis":
         show_analyze_page()
+    elif selected_page == "Batch CSV Analysis":
+        show_batch_csv_analysis_page()
     elif selected_page == "Model Comparison":
         show_model_comparison_page()
     elif selected_page == "Performance Metrics":
         show_performance_metrics_page()
+    elif selected_page == "Analytics Dashboard":
+        show_analytics_dashboard_page()
     elif selected_page == "How it Works":
         show_how_it_works()
     else:
