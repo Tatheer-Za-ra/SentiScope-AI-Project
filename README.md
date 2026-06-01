@@ -14,22 +14,30 @@ Large volumes of online comments, tweets, and reviews are difficult to analyze m
 
 ## Dataset Used
 
-The project uses a Twitter sentiment dataset stored locally inside the `data/` folder.
+SentiScope AI uses the **Twitter Sentiment Dataset** from Kaggle as the training dataset for the traditional machine learning model.
 
-Current expected dataset path:
+Original dataset source:
+
+```text
+https://www.kaggle.com/datasets/saurabhshahane/twitter-sentiment-dataset
+```
+
+The dataset contains tweet text and sentiment labels that can be mapped into three sentiment classes: **Positive**, **Negative**, and **Neutral**. In this project, the dataset is used to train the TF-IDF + Logistic Regression model and to evaluate sentiment classification performance.
+
+For local execution, download the dataset from Kaggle and place the CSV file inside the `data/` folder using the following expected path:
 
 ```text
 data/Twitter_Data.csv
 ```
 
-Current expected columns:
+The current implementation expects these columns by default:
 
 ```text
 clean_text = tweet/comment text
 category = sentiment label
 ```
 
-Label mapping:
+The `category` column is mapped as follows:
 
 ```text
 -1 = Negative
@@ -37,7 +45,7 @@ Label mapping:
  1 = Positive
 ```
 
-Dataset and trained model files are not pushed to GitHub due to size and reproducibility. Place the dataset in the `data/` folder and run `python train_traditional.py`.
+If your downloaded CSV uses different column names, update the `TEXT_COLUMN` and `LABEL_COLUMN` values in `train_traditional.py` before training. Dataset and trained model files are not pushed to GitHub due to file size, licensing, and reproducibility reasons. Users should download the dataset from Kaggle, place it inside the `data/` folder, and run `python train_traditional.py`.
 
 ## Tools and Technologies
 
